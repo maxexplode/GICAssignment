@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class CollisionSimulator extends VehicleSimulator {
@@ -20,23 +21,23 @@ public class CollisionSimulator extends VehicleSimulator {
 
                 String[] gridCoordinates = gridDimensions.trim().split(" ");
                 if (gridCoordinates.length != 2) {
-                    throw new RuntimeException("Incorrect grid coordinates");
+                    throw new SimulatorException("Incorrect grid coordinates");
                 }
                 setGrid(new Simulator.Position(Integer.parseInt(gridCoordinates[0]), Integer.parseInt(gridCoordinates[1])));
-
+                List<String> input = lines.subList(1, lines.size());
                 int batchSize = 3;
 
-                if ((lines.size() - 1) % 3 != 0) {
-                    throw new RuntimeException("Incorrect input");
+                if (input.size() % 3 != 0) {
+                    throw new SimulatorException("Incorrect input");
                 }
 
-                int batches = ((lines.size() - 1) / 3);
+                int batches = ((input.size()) / 3);
 
                 List<Simulator.Scenario> scenarios = new ArrayList<>();
 
                 for (int i = 0; i < batches; i++) {
                     int start = i * batchSize;
-                    List<String> batch = lines.subList(start, start + batchSize);
+                    List<String> batch = input.subList(start, start + batchSize);
                     String vehicleName = batch.get(0);
                     String position = batch.get(1);
                     String commands = batch.get(2);
@@ -46,10 +47,10 @@ public class CollisionSimulator extends VehicleSimulator {
                 checkCollision(scenarios);
 
             } else {
-                System.out.println("The file does not contain enough information.");
+                logger.log(Level.INFO,"Invalid input file");
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new SimulatorException(e);
         }
     }
 
@@ -64,10 +65,10 @@ public class CollisionSimulator extends VehicleSimulator {
         Map<Simulator.Position, List<Simulator.Collision>> collisionMap = new HashMap<>();
 
         for (Simulator.Scenario scenario : scenarios) {
-            Map<Simulator.Position, Integer> positionsMap = simulate(scenario, true);
+            Simulator.SimulatorResponse simulatorResponse = simulate(scenario);
             if (!positionMap.isEmpty()) {
                 positionMap.forEach((s, positions) -> {
-                    Set<Simulator.Position> keys = positionsMap.keySet();
+                    Set<Simulator.Position> keys = simulatorResponse.positionMap().keySet();
                     keys.retainAll(positions.keySet());
                     if (!keys.isEmpty()) {
                         keys.forEach(position -> {
@@ -80,7 +81,7 @@ public class CollisionSimulator extends VehicleSimulator {
                     }
                 });
             }
-            positionMap.put(scenario.vehicle().name(), positionsMap);
+            positionMap.put(scenario.vehicle().name(), simulatorResponse.positionMap());
         }
 
         if (collisionMap.isEmpty()) {

@@ -18,8 +18,6 @@ public class VehicleSimulator {
 
     private static final Map<Simulator.Key, Simulator.Val> directionMap = new HashMap<>();
 
-    Map<Simulator.Position, Integer> positionList = new HashMap<>();
-
     private Simulator.Position grid;
 
     public static final String DELIMITER = " ";
@@ -49,31 +47,38 @@ public class VehicleSimulator {
                 String startPosition = lines.get(1);
                 String movementInstructions = lines.get(2);
 
-                logger.log(Level.INFO, "Grid dimensions: {}", gridDimensions);
-                logger.log(Level.INFO, "Starting position and orientation: ", startPosition);
-                logger.log(Level.INFO, "Commands: ", movementInstructions);
+                logger.log(Level.INFO, "Grid dimensions: {0}", gridDimensions);
+                logger.log(Level.INFO, "Starting position and orientation: {0}", startPosition);
+                logger.log(Level.INFO, "Commands: {0}", movementInstructions);
 
                 String[] gridCoordinates = gridDimensions.trim().split(" ");
                 if (gridCoordinates.length != 2) {
-                    throw new RuntimeException("Incorrect grid coordinates");
+                    throw new SimulatorException("Incorrect grid coordinates");
                 }
 
-                grid = new Simulator.Position(Integer.parseInt(gridCoordinates[0]), Integer.parseInt(gridCoordinates[1]));
+                setGrid(new Simulator.Position(Integer.parseInt(gridCoordinates[0]), Integer.parseInt(gridCoordinates[1])));
 
-                createScenario(null, startPosition, movementInstructions);
+                Simulator.Scenario scenario = createScenario(null, startPosition, movementInstructions);
+
+                Simulator.SimulatorResponse simulatorResponse = simulate(scenario);
+
+                Simulator.Position endPosition = simulatorResponse.currentPosition();
+
+                logger.log(Level.INFO, "Current position height,width %s,%s and facing direction %s".formatted(endPosition.height(), endPosition.width(),
+                        simulatorResponse.direction()));
 
             } else {
-                System.out.println("The file does not contain enough information.");
+                logger.log(Level.INFO,"Invalid input file");
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new SimulatorException(e);
         }
     }
 
     protected Simulator.Scenario createScenario(String vehicleName, String startPosition, String movementInstructions) {
         String[] positionCoordinates = startPosition.trim().split(DELIMITER);
         if (positionCoordinates.length != 3) {
-            throw new RuntimeException("Incorrect start position coordinates");
+            throw new SimulatorException("Incorrect start position coordinates");
         }
         return new Simulator.Scenario(
                 new Simulator.Vehicle
@@ -87,8 +92,8 @@ public class VehicleSimulator {
                 movementInstructions);
     }
 
-    protected Map<Simulator.Position, Integer> simulate(Simulator.Scenario scenario, boolean collisions) {
-
+    protected Simulator.SimulatorResponse simulate(Simulator.Scenario scenario) {
+        Map<Simulator.Position, Integer> positionMap = new HashMap<>();
         Simulator.Vehicle vehicle = scenario.vehicle();
 
         String commands = scenario.commands();
@@ -98,8 +103,10 @@ public class VehicleSimulator {
         BiPredicate<Integer, Integer> gridFunction = (currentHeight, currentWidth) -> currentHeight < grid.height()
                 && currentWidth < grid.height();
 
-        int stepCounter = 1;
-        positionList.put(vehicle.currentPosition(), stepCounter++);
+        int stepCounter = 2;
+
+        //Assuming no collisions at start
+        //positionList.put(vehicle.currentPosition(), stepCounter++);
 
         char[] commandsArray = commands.toCharArray();
         Simulator.Direction currentDirection = vehicle.facingDirection();
@@ -110,11 +117,11 @@ public class VehicleSimulator {
                 case F -> {
                     if (currentVal != null) {
                         if (!gridFunction.test(height.get(), width.get())) {
-                            throw new RuntimeException("Out of the box");
+                            throw new SimulatorException("Out of the box");
                         }
                         currentVal.consumer().accept(height, width);
                         currentDirection = currentVal.facingDirection();
-                        positionList.put(new Simulator.Position(width.get(), height.get()), stepCounter++);
+                        positionMap.put(new Simulator.Position(width.get(), height.get()), stepCounter++);
                     }
                 }
                 case L, R -> {
@@ -122,12 +129,9 @@ public class VehicleSimulator {
                     currentDirection = currentVal.facingDirection();
                     //doNothing
                 }
-                default -> throw new RuntimeException("Unknown command");
             }
         }
-        //logger.log(Level.INFO, "Current position height,width %s,%s and facing direction %s".formatted(height, width, currentDirection));
-        //System.out.printf("Current position %s,%s and facing direction %s", width, height, currentDirection);
-        return positionList;
+        return new Simulator.SimulatorResponse(positionMap, new Simulator.Position(width.get(), height.get()), currentDirection);
     }
 
     protected void setGrid(Simulator.Position grid) {

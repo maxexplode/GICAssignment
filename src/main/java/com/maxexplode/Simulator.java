@@ -1,5 +1,6 @@
 package com.maxexplode;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
@@ -14,7 +15,7 @@ public class Simulator {
     ) {
     }
 
-    protected record Position(
+    protected record Position (
             int width, int height
     ) {
     }
@@ -37,6 +38,8 @@ public class Simulator {
             Direction facingDirection,
             BiConsumer<AtomicInteger, AtomicInteger> consumer) {
     }
+
+    protected record SimulatorResponse(Map<Position, Integer> positionMap,Position currentPosition, Direction direction){}
 
     protected enum Direction {
         N, W, S, E
