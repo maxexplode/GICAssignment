@@ -101,7 +101,7 @@ public class VehicleSimulator {
         AtomicInteger width = new AtomicInteger(vehicle.currentPosition().width());
 
         BiPredicate<Integer, Integer> gridFunction = (currentHeight, currentWidth) -> currentHeight < grid.height()
-                && currentWidth < grid.height();
+                && currentWidth < grid.width();
 
         int stepCounter = 2;
 

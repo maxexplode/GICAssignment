@@ -4,6 +4,6 @@
 
 ```shell
 mvn clean package
-java  -jar /target/app.jar /input/simulate.txt 1
-java  -jar /target/app.jar /input/collision.txt 2
+java  -jar target/app.jar input/simulate.txt 1
+java  -jar target/app.jar input/collision.txt 2
 ```
