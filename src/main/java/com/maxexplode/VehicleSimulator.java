@@ -112,7 +112,7 @@ public class VehicleSimulator {
         Simulator.Direction currentDirection = vehicle.facingDirection();
         Simulator.Val currentVal = directionMap.get(new Simulator.Key(currentDirection, null));
         for (char commandString : commandsArray) {
-            Simulator.Command command = Simulator.Command.valueOf(String.valueOf(commandString));
+            Simulator.Command command = Simulator.Command.valueOf(Character.toString(commandString));
             switch (command) {
                 case F -> {
                     if (currentVal != null) {

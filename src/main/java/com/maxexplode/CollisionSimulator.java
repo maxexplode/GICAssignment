@@ -25,11 +25,10 @@ public class CollisionSimulator extends VehicleSimulator {
                 }
                 setGrid(new Simulator.Position(Integer.parseInt(gridCoordinates[0]), Integer.parseInt(gridCoordinates[1])));
                 List<String> input = lines.subList(1, lines.size());
-                int batchSize = 3;
-
                 if (input.size() % 3 != 0) {
                     throw new SimulatorException("Incorrect input");
                 }
+                int batchSize = 3;
 
                 int batches = ((input.size()) / 3);
 
@@ -57,17 +56,18 @@ public class CollisionSimulator extends VehicleSimulator {
     private void checkCollision(List<Simulator.Scenario> scenarios) {
 
         if (scenarios.size() <= 1) {
+            logger.log(Level.WARNING, "At least more than one scenario is required");
             return;
         }
 
-        Map<String, Map<Simulator.Position, Integer>> positionMap = new HashMap<>();
+        Map<String, Map<Simulator.Position, Integer>> vehiclePositionMap = new HashMap<>();
 
         Map<Simulator.Position, List<Simulator.Collision>> collisionMap = new HashMap<>();
 
         for (Simulator.Scenario scenario : scenarios) {
             Simulator.SimulatorResponse simulatorResponse = simulate(scenario);
-            if (!positionMap.isEmpty()) {
-                positionMap.forEach((s, positions) -> {
+            if (!vehiclePositionMap.isEmpty()) {
+                vehiclePositionMap.forEach((vehicle, positions) -> {
                     Set<Simulator.Position> keys = simulatorResponse.positionMap().keySet();
                     keys.retainAll(positions.keySet());
                     if (!keys.isEmpty()) {
@@ -75,13 +75,13 @@ public class CollisionSimulator extends VehicleSimulator {
                             if (!collisionMap.containsKey(position)) {
                                 collisionMap.put(position, new ArrayList<>());
                             }
-                            collisionMap.get(position).add(new Simulator.Collision(s, positions.get(position)));
+                            collisionMap.get(position).add(new Simulator.Collision(vehicle, positions.get(position)));
                             collisionMap.get(position).add(new Simulator.Collision(scenario.vehicle().name(), positions.get(position)));
                         });
                     }
                 });
             }
-            positionMap.put(scenario.vehicle().name(), simulatorResponse.positionMap());
+            vehiclePositionMap.put(scenario.vehicle().name(), simulatorResponse.positionMap());
         }
 
         if (collisionMap.isEmpty()) {
@@ -97,7 +97,7 @@ public class CollisionSimulator extends VehicleSimulator {
                 });
                 vehicles.forEach(vehicle -> System.out.printf("%s ", vehicle));
                 System.out.println();
-                System.out.printf("%s %s%n", position.width(), position.height());
+                System.out.printf("%s %s\n", position.width(), position.height());
                 steps.forEach(step -> System.out.printf("%s ", step));
             });
         }
