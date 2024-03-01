@@ -19,7 +19,7 @@ public class CollisionSimulator extends VehicleSimulator {
             if (lines.size() >= 3) {
                 String gridDimensions = lines.getFirst();
 
-                String[] gridCoordinates = gridDimensions.trim().split(" ");
+                String[] gridCoordinates = gridDimensions.trim().split(VehicleSimulator.DELIMITER);
                 if (gridCoordinates.length != 2) {
                     throw new SimulatorException("Incorrect grid coordinates");
                 }
